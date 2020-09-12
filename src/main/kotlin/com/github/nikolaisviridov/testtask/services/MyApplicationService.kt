@@ -1,6 +1,6 @@
-package org.jetbrains.plugins.template.services
+package com.github.nikolaisviridov.testtask.services
 
-import org.jetbrains.plugins.template.MyBundle
+import com.github.nikolaisviridov.testtask.MyBundle
 
 class MyApplicationService {
 
