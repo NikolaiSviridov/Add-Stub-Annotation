@@ -22,13 +22,14 @@ plugins {
 val pluginGroup: String by project
 // `pluginName_` variable ends with `_` because of the collision with Kotlin magic getter in the `intellij` closure.
 // Read more about the issue: https://github.com/JetBrains/intellij-platform-plugin-template/issues/29
-val pluginName_: String by project
+val pluginName_: String = "test"
 val pluginVersion: String by project
 val pluginSinceBuild: String by project
 val pluginUntilBuild: String by project
 
-val platformType: String by project
-val platformVersion: String by project
+val platformType: String = "PY"
+//val platformType: String = "PC"
+val platformVersion: String  by project
 val platformDownloadSources: String by project
 
 group = pluginGroup
@@ -39,9 +40,9 @@ repositories {
     mavenCentral()
     jcenter()
 }
-dependencies {
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.12.0")
-}
+//dependencies {
+//    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.12.0")
+//}
 
 // Configure gradle-intellij-plugin plugin.
 // Read more: https://github.com/JetBrains/gradle-intellij-plugin
@@ -56,6 +57,7 @@ intellij {
 //  https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_dependencies.html
 //
 //  setPlugins("java")
+    setPlugins("python")
 }
 
 // Configure detekt plugin.
