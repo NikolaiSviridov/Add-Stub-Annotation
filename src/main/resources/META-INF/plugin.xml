@@ -16,7 +16,7 @@
         <projectService serviceImplementation="com.github.nikolaisviridov.testtask.services.MyProjectService"/>
 
         <intentionAction>
-            <className>com.github.nikolaisviridov.testtask.actions.AddAnnotation</className>
+            <className>com.github.nikolaisviridov.testtask.intentions.AddAnnotation</className>
             <category>Python</category>
         </intentionAction>
     </extensions>
