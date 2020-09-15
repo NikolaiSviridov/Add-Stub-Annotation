@@ -27,8 +27,7 @@ val pluginVersion: String by project
 val pluginSinceBuild: String by project
 val pluginUntilBuild: String by project
 
-val platformType: String = "PY"
-//val platformType: String = "PC"
+val platformType: String = "PC"
 val platformVersion: String  by project
 val platformDownloadSources: String by project
 
@@ -56,8 +55,7 @@ intellij {
 //  Plugin Dependencies:
 //  https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_dependencies.html
 //
-//  setPlugins("java")
-    setPlugins("python")
+    setPlugins("PythonCore")
 }
 
 // Configure detekt plugin.

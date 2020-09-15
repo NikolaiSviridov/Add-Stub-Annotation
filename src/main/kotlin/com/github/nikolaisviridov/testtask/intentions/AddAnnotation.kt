@@ -2,12 +2,12 @@ package com.github.nikolaisviridov.testtask.intentions
 
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.codeInsight.FileModificationService
+import com.intellij.codeInsight.hint.HintManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -57,7 +57,7 @@ class AddAnnotation : PyBaseIntentionAction() {
             try {
                 insertVariableAnnotation(annotationTarget)
             } catch (e: Pep484IncompatibleTypeException) {
-//            PythonUiService.getInstance().showErrorHint(editor, e.message)
+                e.message?.let { HintManager.getInstance().showErrorHint(editor, it) }
             }
         }
 
@@ -78,8 +78,8 @@ class AddAnnotation : PyBaseIntentionAction() {
 
     private fun getVariableAnnotationText(): String = "Any"
 
-    private fun traversePsiTreeVariables(element: PsiElement, result: MutableList<PsiElement> = arrayListOf()): List<PsiElement> {
-        if (element is PyTargetExpression || element is PyReferenceExpression) {
+    private fun traversePsiTreeVariables(element: PsiElement, result: MutableList<PyTargetExpression> = arrayListOf()): List<PyTargetExpression> {
+        if (element is PyTargetExpression) {
             result.add(element)
         }
         for (child in element.children) {
@@ -90,7 +90,6 @@ class AddAnnotation : PyBaseIntentionAction() {
 
     private fun traversePsiTreeFunctions(element: PsiElement, result: MutableList<PyFunction> = arrayListOf()): List<PyFunction> {
         val index = ProjectFileIndex.getInstance(element.project)
-
         if (element is PyFunction) {
             if (!index.isInLibraryClasses(element.containingFile.virtualFile)) {
                 result.add(element)
@@ -107,7 +106,6 @@ class AddAnnotation : PyBaseIntentionAction() {
         val typeEvalContext = TypeEvalContext.codeAnalysis(project, file)
 
         return traversePsiTreeVariables(file)
-                .filterIsInstance<PyTargetExpression>()
                 .filter { !index.isInLibraryClasses(it.containingFile.virtualFile) }
                 .filter { canBeAnnotated(it) }
                 .filter { !isAnnotated(it, typeEvalContext) }
@@ -137,7 +135,6 @@ class AddAnnotation : PyBaseIntentionAction() {
         } else PsiTreeUtil.getParentOfType(target, PyWithItem::class.java, PyAssignmentStatement::class.java, PyForPart::class.java) != null
     }
 
-    // TODO unify this logic with PyTypingTypeProvider somehow
     private fun isAnnotated(target: PyTargetExpression, context: TypeEvalContext): Boolean {
         val scopeOwner = ScopeUtil.getScopeOwner(target) ?: return false
         val name = target.name ?: return false
@@ -226,6 +223,7 @@ class AddAnnotation : PyBaseIntentionAction() {
     private fun annotateParameter(project: Project?,
                                   editor: Editor,
                                   parameter: PyNamedParameter): PyNamedParameter? {
+        @Suppress("NAME_SHADOWING")
         var parameter = parameter
         val defaultParamValue = parameter.defaultValue
         val paramName = StringUtil.notNullize(parameter.name)
