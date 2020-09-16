@@ -22,7 +22,6 @@ import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.Anno
 import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.Pep484IncompatibleTypeException
 import com.jetbrains.python.documentation.doctest.PyDocstringFile
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -63,21 +62,36 @@ class AddAnnotation : PyBaseIntentionAction() {
 
         val functions = traversePsiTreeFunctions(file)
         for (function in functions) {
-            annotateTypes(editor, function)
+            annotateFunction(editor, function)
         }
     }
 
     override fun startInWriteAction(): Boolean = false
 
+    /**
+     * Template for future function
+     */
     private fun getParameterType(): String = "Any"
 
+    /**
+     * Template for future function
+     */
     private fun getFunctionType(): String = "Any"
 
+    /**
+     * Template for future function
+     */
     private fun getVariableType(target: PyTypedElement): PyType? =
             PyBuiltinCache.getInstance(target).getObjectType("Any")
 
+    /**
+     * Template for future function
+     */
     private fun getVariableAnnotationText(): String = "Any"
 
+    /**
+     * Get all PyTargetExpression's recursively from psi tree
+     */
     private fun traversePsiTreeVariables(element: PsiElement, result: MutableList<PyTargetExpression> = arrayListOf())
             : List<PyTargetExpression> {
         if (element is PyTargetExpression) {
@@ -89,6 +103,9 @@ class AddAnnotation : PyBaseIntentionAction() {
         return result
     }
 
+    /**
+     * Get all PyFunction's recursively from psi tree
+     */
     private fun traversePsiTreeFunctions(element: PsiElement, result: MutableList<PyFunction> = arrayListOf())
             : List<PyFunction> {
         val index = ProjectFileIndex.getInstance(element.project)
@@ -103,6 +120,9 @@ class AddAnnotation : PyBaseIntentionAction() {
         return result
     }
 
+    /**
+     * Find PyTargetExpression's which can be annotated
+     */
     private fun findSuitableTargets(project: Project, file: PsiFile): List<PyTargetExpression> {
         val index = ProjectFileIndex.getInstance(project)
         val typeEvalContext = TypeEvalContext.codeAnalysis(project, file)
@@ -111,23 +131,6 @@ class AddAnnotation : PyBaseIntentionAction() {
                 .filter { !index.isInLibraryClasses(it.containingFile.virtualFile) }
                 .filter { canBeAnnotated(it) }
                 .filter { !isAnnotated(it, typeEvalContext) }
-    }
-
-    private fun resolveReferenceAugAssignmentsAware(element: PyReferenceOwner,
-                                                    resolveContext: PyResolveContext): StreamEx<PsiElement> {
-        return StreamEx.of(PyUtil.multiResolveTopPriority(element, resolveContext))
-                .filter { it is PyTargetExpression || it !== element }
-                .flatMap { expandResolveAugAssignments(it, resolveContext) }
-                .distinct()
-    }
-
-    private fun expandResolveAugAssignments(element: PsiElement, context: PyResolveContext): StreamEx<PsiElement> {
-        return if (element is PyReferenceExpression
-                && PyAugAssignmentStatementNavigator.getStatementByTarget(element) != null) {
-            StreamEx.of(resolveReferenceAugAssignmentsAware(element as PyReferenceOwner, context))
-        } else {
-            StreamEx.of(element)
-        }
     }
 
     private fun canBeAnnotated(target: PyTargetExpression): Boolean {
@@ -145,7 +148,7 @@ class AddAnnotation : PyBaseIntentionAction() {
         val name = target.name ?: return false
 
         if (!target.isQualified) {
-            if (hasInlineAnnotation(target)) return true
+            if (target.annotationValue != null) return true
 
             var candidates: StreamEx<PyTargetExpression>? = null
             if (context.maySwitchToAST(target)) {
@@ -158,11 +161,11 @@ class AddAnnotation : PyBaseIntentionAction() {
             }
 
             if (candidates != null) {
-                return candidates.anyMatch(Predicate { hasInlineAnnotation(it) })
+                return candidates.anyMatch(Predicate { it.annotationValue != null })
             }
         } else if (isInstanceAttribute(target, context)) {
             val classLevelDefinitions = findClassLevelDefinitions(target, context)
-            return ContainerUtil.exists(classLevelDefinitions, { hasInlineAnnotation(it) })
+            return ContainerUtil.exists(classLevelDefinitions) { it.annotationValue != null }
         }
         return false
     }
@@ -196,10 +199,6 @@ class AddAnnotation : PyBaseIntentionAction() {
         } else false
     }
 
-    private fun hasInlineAnnotation(target: PyTargetExpression): Boolean {
-        return target.annotationValue != null || target.typeCommentAnnotation != null
-    }
-
     private fun insertVariableAnnotation(target: PyTargetExpression) {
         val context = TypeEvalContext.userInitiated(target.project, target.containingFile)
         val inferredType = getVariableType(target)
@@ -217,13 +216,12 @@ class AddAnnotation : PyBaseIntentionAction() {
         }
     }
 
-    private fun annotateTypes(editor: Editor?, function: PyFunction) {
+    private fun annotateFunction(editor: Editor?, function: PyFunction) {
         if (editor == null) return
         if (!FileModificationService.getInstance().preparePsiElementForWrite(function)) return
 
         WriteAction.run<RuntimeException> { generatePy3kTypeAnnotations(function.project, editor, function) }
     }
-
 
     private fun annotateParameter(project: Project?,
                                   editor: Editor,
@@ -266,6 +264,7 @@ class AddAnnotation : PyBaseIntentionAction() {
         val annotation = annotatedFunction.annotation!!
         return annotation.value ?: error("Generated function must have annotation")
     }
+
 
     private fun generatePy3kTypeAnnotations(project: Project, editor: Editor, function: PyFunction) {
         annotateReturnType(function)
