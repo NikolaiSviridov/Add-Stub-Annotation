@@ -78,7 +78,8 @@ class AddAnnotation : PyBaseIntentionAction() {
 
     private fun getVariableAnnotationText(): String = "Any"
 
-    private fun traversePsiTreeVariables(element: PsiElement, result: MutableList<PyTargetExpression> = arrayListOf()): List<PyTargetExpression> {
+    private fun traversePsiTreeVariables(element: PsiElement, result: MutableList<PyTargetExpression> = arrayListOf())
+            : List<PyTargetExpression> {
         if (element is PyTargetExpression) {
             result.add(element)
         }
@@ -88,7 +89,8 @@ class AddAnnotation : PyBaseIntentionAction() {
         return result
     }
 
-    private fun traversePsiTreeFunctions(element: PsiElement, result: MutableList<PyFunction> = arrayListOf()): List<PyFunction> {
+    private fun traversePsiTreeFunctions(element: PsiElement, result: MutableList<PyFunction> = arrayListOf())
+            : List<PyFunction> {
         val index = ProjectFileIndex.getInstance(element.project)
         if (element is PyFunction) {
             if (!index.isInLibraryClasses(element.containingFile.virtualFile)) {
@@ -120,9 +122,12 @@ class AddAnnotation : PyBaseIntentionAction() {
     }
 
     private fun expandResolveAugAssignments(element: PsiElement, context: PyResolveContext): StreamEx<PsiElement> {
-        return if (element is PyReferenceExpression && PyAugAssignmentStatementNavigator.getStatementByTarget(element) != null) {
+        return if (element is PyReferenceExpression
+                && PyAugAssignmentStatementNavigator.getStatementByTarget(element) != null) {
             StreamEx.of(resolveReferenceAugAssignmentsAware(element as PyReferenceOwner, context))
-        } else StreamEx.of(element)
+        } else {
+            StreamEx.of(element)
+        }
     }
 
     private fun canBeAnnotated(target: PyTargetExpression): Boolean {
