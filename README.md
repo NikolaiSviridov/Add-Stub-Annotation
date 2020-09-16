@@ -1,4 +1,4 @@
-# test_task
+# Add Stub Annotation
 
 <!-- Plugin description -->
 Template for a future plugin. 
@@ -18,5 +18,5 @@ Small tutorial how to build project.
 ### Using runIde
 All dependencies solved via gradle.
 1. Import Gradle project
-2. Run runIde task
+2. Run `runIde` task  
 It'll open Pycharm Community with a loaded plugin.
