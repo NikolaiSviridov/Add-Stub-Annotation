@@ -39,9 +39,6 @@ repositories {
     mavenCentral()
     jcenter()
 }
-//dependencies {
-//    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.12.0")
-//}
 
 // Configure gradle-intellij-plugin plugin.
 // Read more: https://github.com/JetBrains/gradle-intellij-plugin

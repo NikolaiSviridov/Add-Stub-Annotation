@@ -34,7 +34,7 @@ import java.util.function.Predicate
 
 class AddAnnotation : PyBaseIntentionAction() {
 
-    override fun getText(): String = "TestTask Add annotation"
+    override fun getText(): String = "TestTask Add stub-annotation"
 
     override fun getFamilyName(): String = "Test Task FamilyName"
 
