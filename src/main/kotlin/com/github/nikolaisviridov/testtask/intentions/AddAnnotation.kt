@@ -140,7 +140,9 @@ class AddAnnotation : PyBaseIntentionAction() {
                 directParent is PyGlobalStatement ||
                 directParent is PyNonlocalStatement) {
             false
-        } else PsiTreeUtil.getParentOfType(target, PyWithItem::class.java, PyAssignmentStatement::class.java, PyForPart::class.java) != null
+        } else
+            PsiTreeUtil.getParentOfType(target,
+                    PyWithItem::class.java, PyAssignmentStatement::class.java, PyForPart::class.java) != null
     }
 
     private fun isAnnotated(target: PyTargetExpression, context: TypeEvalContext): Boolean {
@@ -151,18 +153,19 @@ class AddAnnotation : PyBaseIntentionAction() {
             if (target.annotationValue != null) return true
 
             var candidates: StreamEx<PyTargetExpression>? = null
-            if (context.maySwitchToAST(target)) {
-                val scope = ControlFlowCache.getScope(scopeOwner)
-                candidates = StreamEx.of(scope.getNamedElements(name, false)).select(PyTargetExpression::class.java)
-            } else if (scopeOwner is PyFile) {
-                candidates = StreamEx.of(scopeOwner.topLevelAttributes).filter { name == it.name }
-            } else if (scopeOwner is PyClass) {
-                candidates = StreamEx.of(scopeOwner.classAttributes).filter { name == it.name }
+            when {
+                context.maySwitchToAST(target) -> {
+                    val scope = ControlFlowCache.getScope(scopeOwner)
+                    candidates = StreamEx.of(scope.getNamedElements(name, false)).select(PyTargetExpression::class.java)
+                }
+                scopeOwner is PyFile ->
+                    candidates = StreamEx.of(scopeOwner.topLevelAttributes).filter { name == it.name }
+                scopeOwner is PyClass ->
+                    candidates = StreamEx.of(scopeOwner.classAttributes).filter { name == it.name }
             }
 
-            if (candidates != null) {
-                return candidates.anyMatch(Predicate { it.annotationValue != null })
-            }
+            if (candidates != null) return candidates.anyMatch(Predicate { it.annotationValue != null })
+
         } else if (isInstanceAttribute(target, context)) {
             val classLevelDefinitions = findClassLevelDefinitions(target, context)
             return ContainerUtil.exists(classLevelDefinitions) { it.annotationValue != null }
@@ -170,7 +173,8 @@ class AddAnnotation : PyBaseIntentionAction() {
         return false
     }
 
-    private fun findClassLevelDefinitions(target: PyTargetExpression, context: TypeEvalContext): List<PyTargetExpression> {
+    private fun findClassLevelDefinitions(target: PyTargetExpression, context: TypeEvalContext)
+            : List<PyTargetExpression> {
         assert(target.containingClass != null)
         assert(target.name != null)
         val classType = PyClassTypeImpl(target.containingClass!!, true)
